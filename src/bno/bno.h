@@ -4,7 +4,8 @@
 #include "../stm32/f4/i2c/i2c.h"
 #include <stm32f4xx.h>
 
-#define BNO_ADDR    ()
+#define BNO_ADDR    (0x00)
+#define BNO_DEF_CHIP_ID         (0xA0)
 
 // Page 1 
 #define BNO_MAG_RADIUS_MSB      (0x6A)
@@ -136,6 +137,18 @@
 #define BNO_ACC_MODE_OFFSET     (0x05)
 #define BNO_GYR_BAND_OFFSET     (0x03)
 #define BNO_GYR_MODE_OFFSET     (0x00)
+#define BNO_MAG_MODE_OFFSET     (0x03)
+#define BNO_MAG_PWRMODE_OFFSET  (0x05)
+// unit selection
+#define BNO_GYR_UNITSEL_OFFSET  (0x01)
+#define BNO_EUL_UNITSEL_OFFSET  (0x02)
+#define BNO_TEMP_UNITSEL_OFFSET (0x04)
+
+
+typedef enum bno_page {
+    BNO_PAGE_0,
+    BNO_PAGE_1
+} bno_page_t;
 
 
 typedef enum bno_pwr {
@@ -198,6 +211,51 @@ typedef enum bno_gyr_mode {
     BNO_GYR_MODE_APS,           /*!< Gyro advanced powersave mode*/
 } bno_gyr_mode_t;
 
+typedef enum bno_mag_rate {
+    BNO_MAG_RATE_2HZ,
+    BNO_MAG_RATE_6HZ,
+    BNO_MAG_RATE_8HZ,
+    BNO_MAG_RATE_10HZ,
+    BNO_MAG_RATE_15HZ,
+    BNO_MAG_RATE_20HZ,
+    BNO_MAG_RATE_25HZ,
+    BNO_MAG_RATE_30HZ,
+} bno_mag_rate_t;
+
+typedef enum bno_mag_mode {
+    BNO_MAG_MODE_LOW_PWR = (0 << BNO_MAG_MODE_OFFSET),
+    BNO_MAG_MODE_REGULAR = (1 << BNO_MAG_MODE_OFFSET),
+    BNO_MAG_MODE_ENH_REG,
+    BNO_MAG_MODE_HIGH_ACC,
+} bno_mag_mode_t;
+
+typedef enum bno_mag_pwr {
+    BNO_MAG_PWRMODE_NORMAL = (0 << BNO_MAG_PWRMODE_OFFSET),
+    BNO_MAG_PWRMODE_SLEEP  = (1 << BNO_MAG_PWRMODE_OFFSET),
+    BNO_MAG_PWRMODE_SUSPEND,
+    BNO_MAG_PWRMODE_FORCE
+} bno_mag_pwr_t;
+
+typedef enum bno_acc_unitsel {
+    BNO_ACC_UNITSEL_M_S2,
+    BNO_ACC_UNITSEL_MG,
+} bno_acc_unitsel_t;
+
+typedef enum bno_gyr_unitsel {
+    BNO_GYR_UNITSEL_DPS,
+    BNO_GYR_UNITSEL_RPS,
+} bno_gyr_unitsel_t;
+
+typedef enum bno_eul_unitsel {
+    BNO_EUL_UNITSEL_DEG,
+    BNO_EUL_UNITSEL_RAD,
+} bno_eul_unitsel_t;
+
+typedef enum bno_temp_unitsel {
+    BNO_TEMP_UNITSEL_C,
+    BNO_TEMP_UNITSEL_F,
+} bno_temp_unitsel_t;
+
 typedef enum bno_opmode {
     BNO_MODE_CONFIG,
     BNO_MODE_AO,
@@ -225,8 +283,32 @@ typedef enum bno_err {
  * BNO055 object struct
  */
 typedef struct bno {
-    I2C_port *i2c;          /*!<I2C port */
-    bno_err_t err;          /*!<current error code*/
+
+    //======| PRIVATE |======
+    I2C_port _i2c;                      /*!<I2C port */
+    bno_opmode_t _mode;                 /*!<BNO operation mode like `CONFIGMODE`,`IMU`, etc.*/
+    bno_pwr_t _pwr_mode;                /*!<BNO power mode */
+    // unit selection
+    bno_acc_unitsel_t _acc_unit;        /*!<Accelerometer unit [m/s^2, mg](`BNO_ACC_UNITSEL_*`)*/
+    bno_temp_unitsel_t _temp_unit;      /*!<Temperature unit [C, F](`BNO_TEMP_UNITSEL_*`) */
+    bno_gyr_unitsel_t _gyr_unit;        /*!<Gyroscope unit select [dps, rps]*/
+    bno_eul_unitsel_t _eul_unit;        /*!<Euler angle unit select [deg, rad] */
+
+    //======| PUBLIC |======
+    // accelerometer
+    bno_acc_range_t acc_rang;           /*!<Accelerometer range (`BNO_ACC_RANGE_*`)*/
+    bno_acc_band_t acc_bandwidth;       /*!<Accelerometer bandwidth (`BNO_ACC_BAND_*`)*/
+    bno_acc_mode_t acc_mode;            /*!<Accelerometer operation mode (`BNO_ACC_MODE_*`)*/
+    // gyroscope
+    bno_gyr_range_t gyr_range;          /*!<Gyroscope range (`BNO_GYR_RANGE_*`)*/
+    bno_gyr_band_t gyr_bandwidth;       /*!<Gyroscope bandwidth (`BNO_GYR_BAND_*`)*/
+    bno_gyr_mode_t gyr_mode;            /*!<Gyroscope mode select (`BNO_GYR_MODE_*`)*/
+    // magnetometer
+    bno_mag_rate_t mag_out_rate;        /*!<Magnetometer output rate (`BNO_MAG_RATE_*`)*/
+    bno_mag_mode_t mag_mode;            /*!<Magnetometer mode select (`BNO_MAG_MODE_)*/
+    bno_mag_pwr_t mag_pwr_mode;         /*!<Magnetometer power mode (`BNO_MAG_PWRMODE_*`)*/
+    bno_err_t err;                      /*!<current error code*/
+
 } bno_t;
 
 bno_t _bno;
@@ -235,7 +317,39 @@ bno_t _bno;
 bno_t BNO055_new();
 
 // setter
+bno_err_t BNO_set_page(const bno_t bno, const bno_page_t page);
+bno_err_t BNO_set_opmode(const bno_t bno, const bno_opmode_t mode);
+bno_err_t BNO_set_temp_unit(const bno_t bno, const bno_temp_unitsel_t unit);
+bno_err_t BNO_set_gyr_unit(const bno_t bno, const bno_temp_unitsel_t unit);
+bno_err_t BNO_set_acc_unit(const bno_t bno, const bno_acc_unitsel_t unit);
+bno_err_t BNO_set_euler_unit(const bno_t bno, const bno_acc_unitsel_t unit);
+//bno_err_t BNO_set_acc_range(const bno_t bno, const bno_acc_range_t range);
+//bno_err_t BNO_set_acc_bandwidth(const bno_t bno, const bno_acc_band_t bandwidth);
+//bno_err_t BNO_set_acc_mode(const bno_t bno, const bno_acc_mode_t mode);
+bno_err_t BNO_set_acc_conf(const bno_t bno,
+                           const bno_acc_range_t range,
+                           const bno_acc_band_t bandwidth,
+                           const bno_acc_mode_t mode);
+//bno_err_t BNO_set_gyr_range(const bno_t bno, const bno_gyr_range_t range);
+//bno_err_t BNO_set_gyr_bandwidth(const bno_t bno, const bno_gyr_band_t bandwidth);
+//bno_err_t BNO_set_gyr_mode(const bno_t bno, const bno_gyr_mode_t mode);
+bno_err_t BNO_set_gyr_conf(const bno_t bno,
+                           const bno_gyr_range_t range,
+                           const bno_gyr_band_t bandwidth,
+                           const bno_gyr_mode_t mode);
+//bno_err_t BNO_set_mag_out_rate(const bno_t bno, const bno_mag_rate_t rate);
+//bno_err_t BNO_set_mag_pwr_mode(const bno_t bno, const bno_mag_pwr_t pwr_mode);
+//bno_err_t BNO_set_mag_mode(const bno_t bno, const bno_mag_mode_t mode);
+bno_err_t BNO_set_mag_conf(const bno_t bno,
+                           const bno_mag_rate_t out_rate,
+                           const bno_mag_pwr_t pwr_mode,
+                           const bno_mag_mode_t mode);
+
 bno_err_t BNO_set_pwr_mode(const bno_t bno, const bno_pwr_t pwr);
+
+
+// getter
+uint32_t BNO_get_chip_id(const bno_t bno);
 
 
 char *BNO_err_str(const bno_err_t err);

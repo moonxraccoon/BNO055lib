@@ -3,6 +3,7 @@
 #include "../../stm32/f4/i2c/i2c.h"
 #include "../../stm32/f4/delay/delay.h"
 #include "../../stm32/f4/uart/uart.h"
+#include "../../stm32/f4/gpio/gpio.h"
 
 volatile int32_t mpu_gyro_calib[3];
 volatile int32_t mpu_accel_calib[3];
@@ -15,6 +16,7 @@ mpu_err_t MPU_init(mpu_t *mpu) {
     mpu_err_t mpu_err;
     i2c_err = I2C_write(mpu->port, (mpu->alt_addr ? MPU_ADDR_ALT : MPU_ADDR), PWR_MGMT_1, 0x00);
     if (i2c_err != I2C_OK) {
+        _I2C_send_stop(mpu->port);
         return MPU_ERR_I2C_FAILED;
     }
     if ((mpu_err = MPU_set_gyro_range(mpu)) != MPU_OK) {
@@ -114,6 +116,7 @@ mpu_err_t MPU_gyro_raw(mpu_t mpu, int32_t *data) {
 mpu_err_t MPU_accel_x_raw(mpu_t mpu, int32_t *data) {
     uint8_t out[2] = {0, 0}; 
     i2c_err_t err;
+    
     err = I2C_read_burst(mpu.port, (mpu.alt_addr ? MPU_ADDR_ALT : MPU_ADDR), ACCEL_XOUT_H, 2, out);
     if (err != I2C_OK) {
         return MPU_ERR_I2C_FAILED;

@@ -2,6 +2,7 @@
 #include "../gpio/gpio.h"
 #include <stm32f4xx.h>
 #include <stdbool.h>
+#include "../delay/delay.h"
 
 
 /**
@@ -151,6 +152,7 @@ i2c_err_t I2C_read(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t *data)
     volatile int tmp;
     uint8_t out;
     i2c_err_t err;
+    // TODO: fix infinite loop on wrong device
     while((port.i2c)->SR2 & I2C_SR2_BUSY) {
         if ((err = I2C_get_err(port)) != I2C_OK) {
             return err;
@@ -186,6 +188,7 @@ i2c_err_t I2C_read(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t *data)
     (port.i2c)->CR1 |= I2C_CR1_STOP;
     // check for RXNE flag
     while(!((port.i2c)->SR1 & I2C_SR1_RXNE));
+    //GPIO_write(PA8, GPIO_ON);
     *data = (port.i2c)->DR;
     return I2C_OK;
 }
@@ -351,7 +354,8 @@ i2c_err_t I2C_write(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t data)
     (port.i2c)->DR = data;
     while(!((port.i2c)->SR1 & I2C_SR1_BTF));
     (port.i2c)->CR1 |= I2C_CR1_STOP; 
-    
+     
+    delayMs(1);
     return I2C_OK;
 }
 
@@ -413,6 +417,11 @@ i2c_err_t _I2C_send_data(I2C_port port, uint8_t data) {
     return I2C_OK;
 }
 
+i2c_err_t _I2C_send_stop(I2C_port port) { 
+    (port.i2c)->CR1 |= I2C_CR1_STOP; 
+    return I2C_OK;
+}
+
 char *I2C_get_err_str(i2c_err_t err) {
     switch (err) {
         case I2C_ERR_AF:
@@ -450,3 +459,5 @@ i2c_err_t I2C_handle_err(I2C_port port, i2c_err_t err) {
 
     return I2C_OK;
 }
+
+

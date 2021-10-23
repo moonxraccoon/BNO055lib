@@ -5,7 +5,7 @@
 #include <stm32f4xx.h>
 #include <stdbool.h>
 
-#define BNO_ADDR    (0x00)
+#define BNO_ADDR                (0x29)
 #define BNO_DEF_CHIP_ID         (0xA0)
 
 // Page 1 

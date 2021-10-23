@@ -1,6 +1,7 @@
 #include "bno.h"
 #include "../stm32/f4/i2c/i2c.h"
 #include "../stm32/f4/delay/delay.h"
+#include "../stm32/f4/gpio/gpio.h"
 
 
 bool BNO_init(bno_t *bno) {
@@ -8,17 +9,20 @@ bool BNO_init(bno_t *bno) {
     i2c_err_t err;
     bno_err_t err_bno;
     err = I2C_read(bno->i2c, BNO_ADDR, BNO_CHIP_ID, &id);
+    if (err != I2C_OK) {
+        return false;
+    }
     if (id != BNO_DEF_CHIP_ID) {
         return false;
     }
-    BNO_reset(bno);
-    delayMs(2);
-    if (BNO_set_page(bno, BNO_PAGE_0) != BNO_OK) {
+    // set operation mode to config mode
+    if (BNO_set_opmode(bno, BNO_MODE_CONFIG) != BNO_OK) {
         return false;
     }
     delayMs(2);
-    // set operation mode to config mode
-    if (BNO_set_opmode(bno, BNO_MODE_CONFIG) != BNO_OK) {
+    //BNO_reset(bno);
+    delayMs(20);
+    if (BNO_set_page(bno, BNO_PAGE_0) != BNO_OK) {
         return false;
     }
     delayMs(BNO_CONFIG_TIME_DELAY+5);
@@ -27,12 +31,12 @@ bool BNO_init(bno_t *bno) {
         return false;
     }
     delayMs(2);
-    BNO_on(bno);
+    //BNO_on(bno);
     if (BNO_set_opmode(bno, bno->mode) != BNO_OK) {
         return false;
     }
     delayMs(BNO_ANY_TIME_DELAY+5); 
-    return false;
+    return true;
 }
 
 
@@ -63,14 +67,11 @@ bno_err_t BNO_set_page(bno_t *bno, const bno_page_t page) {
     if (page > 0x01) {
         return BNO_ERR_PAGE_TOO_HIGH;
     }
-    if (BNO_set_page(bno, BNO_PAGE_1) != BNO_OK) {
-        return BNO_ERR_I2C;
-    }
     if (I2C_write(bno->i2c, BNO_ADDR, BNO_PAGE_ID, page) != I2C_OK) {
         return BNO_ERR_I2C;
     }
     bno->_page = page;
-    BNO_set_page(bno, BNO_PAGE_0);
+    //BNO_set_page(bno, BNO_PAGE_0);
     delayMs(2);
     return BNO_OK;
 }
@@ -167,14 +168,14 @@ bno_err_t BNO_set_unit(bno_t *bno,
 }
 
 bno_err_t BNO_reset(bno_t *bno) {
-    if (I2C_write(bno->i2c, BNO_ADDR, BNO_SYS_TRIGGER, 0x20) != I2C_OK) {
+    if (I2C_write(bno->i2c, BNO_ADDR, BNO_SYS_TRIGGER, (1<<5)) != I2C_OK) {
         return BNO_ERR_I2C;
     }
     return BNO_OK;
 }
 
 bno_err_t BNO_on(bno_t *bno) {
-    if (I2C_write(bno->i2c, BNO_ADDR, BNO_SYS_TRIGGER, 0x00) != I2C_OK) {
+    if (I2C_write(bno->i2c, BNO_ADDR, BNO_SYS_TRIGGER, (0<<5)) != I2C_OK) {
         return BNO_ERR_I2C;
     }
     return BNO_OK;

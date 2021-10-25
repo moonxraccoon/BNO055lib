@@ -68,10 +68,11 @@ int main(void) {
     bno.mode = BNO_MODE_IMU;
     //i2c_err = I2C_write(i2c1, MPU_ADDR, 0x6B, 0x00);
     USART_printf(port, "%s\n", I2C_get_err_str(i2c_err));
+    delayMs(2000);
     if (BNO_init(&bno)) {
-        USART_printf(port, "BNO init great-success\n");
+        USART_printf(port, "[BNO] init success\n");
     } else {
-        USART_printf(port, "BNO init failed\n");
+        USART_printf(port, "[BNO] init failed\n");
     }
     delayMs(2000);
     
@@ -80,12 +81,12 @@ int main(void) {
     unsigned long int cycle = 0; 
     uint8_t bit_test = 0;
     usart_err_t usart_err;
-    USART_printf(port, "APB2 clock: %d\n", ahb_freq);
+    //USART_printf(port, "APB2 clock: %d\n", ahb_freq);
     uint32_t last_time = millis();
     TIM_init(&tim5);
     while (1) {
         USART_printf(port, "cycle: %d\n", cycle++);
-        delayMs(500);
+        delayMs(1000);
     }
 }
 

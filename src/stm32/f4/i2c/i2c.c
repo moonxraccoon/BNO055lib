@@ -52,6 +52,10 @@ i2c_err_t I2C_init(I2C_port *port) {
         return I2C_ERR_FREQ_TOO_HIGH;
     }
 
+    if (port->timeout == 0) {
+        port->timeout = 100;
+    }
+
     // Reset CRx, CCR and TRISE
     (port->i2c)->CR1 = 0x0000;
     (port->i2c)->CR2 = 0x0000;
@@ -153,11 +157,26 @@ i2c_err_t I2C_read(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t *data)
     uint8_t out;
     i2c_err_t err;
     // TODO: fix infinite loop on wrong device
-    while((port.i2c)->SR2 & I2C_SR2_BUSY) {
+    GPIO_write(PA8, GPIO_ON);
+    SysTick->LOAD = (apb1_freq/1000);
+    SysTick->VAL = 0x00;
+    SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSRC;
+
+    for(uint32_t i = 0; i < port.timeout && (port.i2c)->SR2 & I2C_SR2_BUSY; i++) {
+        while((SysTick->CTRL & CTRL_COUNTFLAG) == 0);
         if ((err = I2C_get_err(port)) != I2C_OK) {
             return err;
         }
+        if (i == port.timeout - 1) {
+            return I2C_ERR_BUS_TIMEOUT;
+        }
     }
+    SysTick->CTRL = 0x00;
+    //while((port.i2c)->SR2 & I2C_SR2_BUSY) {
+    //    if ((err = I2C_get_err(port)) != I2C_OK) {
+    //        return err;
+    //    }
+    //}
     // Generate start condition
     if ((err = _I2C_send_start(port)) != I2C_OK) {
         return err;
@@ -213,11 +232,27 @@ i2c_err_t I2C_read_burst(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t 
     volatile int tmp;
     i2c_err_t err;
     volatile uint8_t reg = memaddr;
-    while((port.i2c)->SR2 & I2C_SR2_BUSY) {
+    //while((port.i2c)->SR2 & I2C_SR2_BUSY) {
+    //    if ((err = I2C_get_err(port)) != I2C_OK) {
+    //        return err;
+    //    }
+    //}
+
+    // Timeout for bus busy
+    SysTick->LOAD = (apb1_freq/1000);
+    SysTick->VAL = 0x00;
+    SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSRC;
+    for(uint32_t i = 0; i < port.timeout && (port.i2c)->SR2 & I2C_SR2_BUSY; i++) {
+        while((SysTick->CTRL & CTRL_COUNTFLAG) == 0);
         if ((err = I2C_get_err(port)) != I2C_OK) {
             return err;
         }
+        if (i == port.timeout - 1) {
+            return I2C_ERR_BUS_TIMEOUT;
+        }
     }
+    SysTick->CTRL = 0x00;
+
     // GENERATE START CONDITION
     if ((err = _I2C_send_start(port)) != I2C_OK) {
         return err; 
@@ -292,11 +327,29 @@ i2c_err_t I2C_write_burst(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t
     }
     volatile int tmp;
     i2c_err_t err;
-    while((port.i2c)->SR2 & I2C_SR2_BUSY) {
+
+
+    // Timeout for bus busy
+    SysTick->LOAD = (apb1_freq/1000);
+    SysTick->VAL = 0x00;
+    SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSRC;
+    for(uint32_t i = 0; i < port.timeout && (port.i2c)->SR2 & I2C_SR2_BUSY; i++) {
+        while((SysTick->CTRL & CTRL_COUNTFLAG) == 0);
         if ((err = I2C_get_err(port)) != I2C_OK) {
             return err;
         }
+        if (i == port.timeout - 1) {
+            return I2C_ERR_BUS_TIMEOUT;
+        }
     }
+    SysTick->CTRL = 0x00;
+
+
+    //while((port.i2c)->SR2 & I2C_SR2_BUSY) {
+    //    if ((err = I2C_get_err(port)) != I2C_OK) {
+    //        return err;
+    //    }
+    //}
     if ((err = _I2C_send_start(port)) != I2C_OK) {
         return err;
     }
@@ -329,6 +382,24 @@ i2c_err_t I2C_write(I2C_port port, uint8_t slave, uint8_t memaddr, uint8_t data)
     }
     volatile int tmp;
     i2c_err_t err;
+
+
+    // Timeout for bus busy
+    SysTick->LOAD = (apb1_freq/1000);
+    SysTick->VAL = 0x00;
+    SysTick->CTRL = CTRL_ENABLE | CTRL_CLKSRC;
+    for(uint32_t i = 0; i < port.timeout && (port.i2c)->SR2 & I2C_SR2_BUSY; i++) {
+        while((SysTick->CTRL & CTRL_COUNTFLAG) == 0);
+        if ((err = I2C_get_err(port)) != I2C_OK) {
+            return err;
+        }
+        if (i == port.timeout - 1) {
+            return I2C_ERR_BUS_TIMEOUT;
+        }
+    }
+    SysTick->CTRL = 0x00;
+
+
     while((port.i2c)->SR2 & I2C_SR2_BUSY) {
         if ((err = I2C_get_err(port)) != I2C_OK) {
             return err;

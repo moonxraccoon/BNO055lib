@@ -10,29 +10,35 @@ bool BNO_init(bno_t *bno) {
     bno_err_t err_bno;
     err = I2C_read(bno->i2c, BNO_ADDR, BNO_CHIP_ID, &id);
     if (err != I2C_OK) {
+        _I2C_send_stop(bno->i2c);
         return false;
     }
     if (id != BNO_DEF_CHIP_ID) {
+        _I2C_send_stop(bno->i2c);
         return false;
     }
     // set operation mode to config mode
     if (BNO_set_opmode(bno, BNO_MODE_CONFIG) != BNO_OK) {
+        _I2C_send_stop(bno->i2c);
         return false;
     }
     delayMs(2);
     //BNO_reset(bno);
     delayMs(20);
     if (BNO_set_page(bno, BNO_PAGE_0) != BNO_OK) {
+        _I2C_send_stop(bno->i2c);
         return false;
     }
     delayMs(BNO_CONFIG_TIME_DELAY+5);
 
     if (BNO_set_pwr_mode(bno, BNO_PWR_NORMAL) != BNO_OK) {
+        _I2C_send_stop(bno->i2c);
         return false;
     }
     delayMs(2);
     //BNO_on(bno);
     if (BNO_set_opmode(bno, bno->mode) != BNO_OK) {
+        _I2C_send_stop(bno->i2c);
         return false;
     }
     delayMs(BNO_ANY_TIME_DELAY+5); 

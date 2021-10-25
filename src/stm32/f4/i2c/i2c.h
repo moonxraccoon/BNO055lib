@@ -86,6 +86,7 @@ typedef enum _i2c_err_h {
     I2C_ERR_SMBALERT,
     I2C_ERR_PORT_UNDEFINED,
     I2C_ERR_NOT_CONFIGURED,
+    I2C_ERR_BUS_TIMEOUT,
 } i2c_err_t;
 
 typedef struct __twowire_it_handle {
@@ -99,6 +100,7 @@ typedef struct _I2C_port {
     uint8_t frequency;
     uint8_t mode;
     uint8_t duty;
+    uint8_t timeout;
     bool _set_up;
     bool interrupt_driven;
     bool slave;

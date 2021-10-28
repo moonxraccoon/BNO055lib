@@ -122,7 +122,6 @@ bno_err_t BNO_set_opmode(bno_t *bno, const bno_opmode_t mode) {
     if (I2C_write(bno->i2c, BNO_ADDR, BNO_OPR_MODE, mode) != I2C_OK) {
         return BNO_ERR_I2C;
     }
-    bno->mode = mode;
     delayMs(BNO_ANY_TIME_DELAY+5);
     return BNO_OK;
 }

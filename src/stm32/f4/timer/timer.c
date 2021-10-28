@@ -10,8 +10,10 @@ tim_err_t TIM_init(const struct timer_port *port) {
         return TIM_ERR_CONFIG_NO_TIMER;
     }
     // check if prescaler or autoreload value is = 0
-    if (port->prescaler == 0 || port->prescaler >= TIM_MAX_PSC) {
-        return TIM_ERR_CONFIG_PRESCALER;
+    if (port->prescaler >= TIM_MAX_PSC) {
+        return TIM_ERR_CONFIG_PRESCALER_OVERFLOW;
+    } else if (port->prescaler == 0) {
+        return TIM_ERR_CONFIG_PRESCALER_ZERO;
     }
     // check if timer is not 32-bit and value is >16-bit
     if (!(port->timer == TIM2 || port->timer == TIM5) && 
@@ -32,7 +34,7 @@ tim_err_t TIM_init(const struct timer_port *port) {
         port->timer->DIER |= TIM_UIE;
         _TIM_NVIC_enable(port);
     }
-
+    port->timer->CR1 |= TIM_CR1_CEN;
     return TIM_OK;
 }
 
@@ -93,7 +95,7 @@ tim_err_t TIM_set_prescaler(const struct timer_port *port) {
     if (port->timer == NULL) {
         return TIM_ERR_CONFIG_NO_TIMER;
     }
-    port->timer->PSC = (port->prescaler)-1;
+    port->timer->PSC = (port->prescaler);//-1;
     return TIM_OK;
 }
 
@@ -101,7 +103,7 @@ tim_err_t TIM_set_autoreload(const struct timer_port *port) {
     if (port->timer == NULL) {
         return TIM_ERR_CONFIG_NO_TIMER;
     }
-    port->timer->ARR = (port->autoreload);
+    port->timer->ARR = (port->autoreload)-1;
     return TIM_OK;
 }
 
@@ -116,13 +118,6 @@ tim_err_t TIM_set_dir(const struct timer_port *port) {
     return TIM_OK;
 }
 
-uint32_t millis() {
-    return TIM5->CNT;
-}
-
-uint32_t micros() {
-    return TIM5->CNT;
-}
 
 void _TIM_NVIC_enable(const struct timer_port *port) {
     if (port->timer == TIM2) {
@@ -183,4 +178,18 @@ void TIM11_IRQHandler(void) {
         tim11_it_func();
         TIM11->SR &= ~(TIM_UIE_FLAG);
     }
+}
+
+
+char *TIM_err_str(const tim_err_t err) {
+    switch(err) {
+        case TIM_ERR_CONFIG_NO_TIMER:
+            return "No timer on 'timer_port.timer' structure";
+        case TIM_ERR_CONFIG_PRESCALER_OVERFLOW:
+            return "Prescaler value too high -> set less than 0xFFFF";
+        case TIM_ERR_CONFIG_PRESCALER_ZERO:
+            return "Prescaler value is 0 -> set higher than 0";
+        default:
+            return "Ok!";
+    } 
 }

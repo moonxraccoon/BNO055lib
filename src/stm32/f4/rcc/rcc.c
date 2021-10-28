@@ -2,7 +2,7 @@
 #include <stm32f4xx.h>
 #include "../pwr/pwr.h"
 
-uint32_t ahb_freq = 16000000;
+uint32_t SYSTEM_CLOCK = 16000000;
 uint32_t apb1_freq = 16000000;
 uint32_t apb2_freq = 16000000;
 
@@ -132,11 +132,12 @@ void RCC_system_clock_config(clock_t clock) {
     RCC_set_sysclk_src(RCC_SYSCLK_PLL);
     RCC_wait_sysclk_rdy(RCC_SYSCLK_PLL);
 
-    ahb_freq = clock.ahb_freq;
+    SYSTEM_CLOCK = clock.ahb_freq;
     apb1_freq = clock.apb1_freq;
     apb2_freq = clock.apb2_freq;
 
     RCC_reset_osc(RCC_OSC_HSI);
+    SystemCoreClockUpdate();
 }
 
 

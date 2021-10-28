@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #define BNO_ADDR                (0x29)
+#define BNO_ADDR_ALT            (0x28)
 #define BNO_DEF_CHIP_ID         (0xA0)
 
 // Page 1 
@@ -252,18 +253,18 @@ typedef enum bno_acc_unitsel {
 } bno_acc_unitsel_t;
 
 typedef enum bno_gyr_unitsel {
-    BNO_GYR_UNITSEL_DPS = (0 << BNO_GYR_UNITSEL_OFFSET),
-    BNO_GYR_UNITSEL_RPS = (1 << BNO_GYR_UNITSEL_OFFSET),
+    BNO_GYR_UNIT_DPS = (0 << BNO_GYR_UNITSEL_OFFSET),
+    BNO_GYR_UNIT_RPS = (1 << BNO_GYR_UNITSEL_OFFSET),
 } bno_gyr_unitsel_t;
 
 typedef enum bno_eul_unitsel {
-    BNO_EUL_UNITSEL_DEG = (0 << BNO_EUL_UNITSEL_OFFSET),
-    BNO_EUL_UNITSEL_RAD = (1 << BNO_EUL_UNITSEL_OFFSET),
+    BNO_EUL_UNIT_DEG = (0 << BNO_EUL_UNITSEL_OFFSET),
+    BNO_EUL_UNIT_RAD = (1 << BNO_EUL_UNITSEL_OFFSET),
 } bno_eul_unitsel_t;
 
 typedef enum bno_temp_unitsel {
-    BNO_TEMP_UNITSEL_C = (0 << BNO_TEMP_UNITSEL_OFFSET),
-    BNO_TEMP_UNITSEL_F = (1 << BNO_TEMP_UNITSEL_OFFSET),
+    BNO_TEMP_UNIT_C = (0 << BNO_TEMP_UNITSEL_OFFSET),
+    BNO_TEMP_UNIT_F = (1 << BNO_TEMP_UNITSEL_OFFSET),
 } bno_temp_unitsel_t;
 
 typedef enum bno_opmode {
@@ -272,6 +273,7 @@ typedef enum bno_opmode {
     BNO_MODE_MO,
     BNO_MODE_GO,
     BNO_MODE_AM,
+    BNO_MODE_AG,
     BNO_MODE_MG,
     BNO_MODE_AMG,
     BNO_MODE_IMU,
@@ -285,9 +287,9 @@ typedef enum bno_opmode {
  * BNO055 error codes
  */
 typedef enum bno_err {
-    BNO_OK,
-    BNO_ERR_I2C,
-    BNO_ERR_PAGE_TOO_HIGH,
+    BNO_OK,                             /*!<No error*/
+    BNO_ERR_I2C,                        /*!<Error on the I2C bus*/
+    BNO_ERR_PAGE_TOO_HIGH,              /*!<Page set too high [page](`BNO_PAGE_0`,`BNO_PAGE_1`)*/
 } bno_err_t;
 
 /**
@@ -332,13 +334,17 @@ bool BNO_init(bno_t *bno);
 bno_err_t BNO_reset(bno_t *bno);
 bno_err_t BNO_on(bno_t *bno);
 
+// ======| BNO sensor data |======
+
+bno_err_t BNO_temperature(bno_t *bno, int8_t *temp);
+bno_err_t BNO_euler_roll(bno_t *bno, int16_t *roll);
+
+
+
 // setter
 bno_err_t BNO_set_page(bno_t *bno, const bno_page_t page);
 bno_err_t BNO_set_opmode(bno_t *bno, const bno_opmode_t mode);
-//bno_err_t BNO_set_temp_unit(const bno_t bno, const bno_temp_unitsel_t unit);
-//bno_err_t BNO_set_gyr_unit(const bno_t bno, const bno_temp_unitsel_t unit);
-//bno_err_t BNO_set_acc_unit(const bno_t bno, const bno_acc_unitsel_t unit);
-//bno_err_t BNO_set_euler_unit(const bno_t bno, const bno_acc_unitsel_t unit);
+
 bno_err_t BNO_set_unit(bno_t *bno,
                        const bno_temp_unitsel_t t_unit,
                        const bno_gyr_unitsel_t g_unit,

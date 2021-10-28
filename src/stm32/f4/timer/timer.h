@@ -46,7 +46,8 @@ typedef struct timer_port {
 typedef enum timer_err {
     TIM_OK,
     TIM_ERR_CONFIG_NO_TIMER,
-    TIM_ERR_CONFIG_PRESCALER,
+    TIM_ERR_CONFIG_PRESCALER_OVERFLOW,
+    TIM_ERR_CONFIG_PRESCALER_ZERO,
     TIM_ERR_CONFIG_AUTORELOAD
 } tim_err_t;
 
@@ -64,13 +65,8 @@ bool TIM_is_TIM2_5(const struct timer_port *port);
 void TIM_rcc_enable(const struct timer_port *port);
 void TIM_rcc_disable(const struct timer_port *port);
 
+char *TIM_err_str(const tim_err_t err);
+
 void _TIM_NVIC_enable(const struct timer_port *port);
-
-
-
-
-
-uint32_t millis();
-uint32_t micros();
 
 #endif

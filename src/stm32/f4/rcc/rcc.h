@@ -163,7 +163,7 @@ typedef struct clock_conf {
 } clock_t;
 
 
-uint32_t ahb_freq;
+uint32_t SYSTEM_CLOCK;
 uint32_t apb1_freq;
 uint32_t apb2_freq;
 

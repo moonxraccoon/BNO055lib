@@ -283,6 +283,11 @@ typedef enum bno_opmode {
     BNO_MODE_NDOF,
 } bno_opmode_t;
 
+enum bno_temp_src {
+    BNO_TEMP_SRC_ACC,
+    BNO_TEMP_SRC_GYR,
+};
+
 /**
  * BNO055 error codes
  */
@@ -291,6 +296,7 @@ typedef enum bno_err {
     BNO_ERR_I2C,                        /*!<Error on the I2C bus*/
     BNO_ERR_PAGE_TOO_HIGH,              /*!<Page set too high [page](`BNO_PAGE_0`,`BNO_PAGE_1`)*/
 } bno_err_t;
+
 
 /**
  * BNO055 object struct
@@ -374,6 +380,7 @@ bno_err_t BNO_set_mag_conf(bno_t *bno,
                            const bno_mag_mode_t mode);
 
 bno_err_t BNO_set_pwr_mode(bno_t *bno, const bno_pwr_t pwr);
+bno_err_t BNO_set_temp_src(bno_t *bno, const enum bno_temp_src src);
 
 
 // getter

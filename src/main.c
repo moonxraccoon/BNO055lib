@@ -77,6 +77,7 @@ int main(void) {
     }
     delayMs(1000);
     
+    //BNO_set_temp_src(&bno, BNO_TEMP_SRC_ACC);
     bno.err = BNO_set_unit(
             &bno,
             BNO_TEMP_UNIT_C,
@@ -116,21 +117,34 @@ int main(void) {
     USART_printf(port, "\n");
 
     int8_t temperature;
+    uint8_t addr_data;
     uint32_t min = 0, hour = 0;
     USART_printf(port, "[System] Starting main loop...\n\n");
     delayMs(1000);
     I2C_write(i2c1, BNO_ADDR, BNO_TEMP_SOURCE, 0x00);
     int16_t roll;
+    //BNO_set_opmode(&bno, BNO_MODE_CONFIG);
+    //BNO_set_page(&bno, 0x00);
+    //i2c_err = I2C_write(i2c1, BNO_ADDR, BNO_UNIT_SEL, (1 << 0x04));
+    //BNO_set_opmode(&bno, bno.mode);
+    if (i2c_err != I2C_OK) {
+        USART_printf(port, "[-] I2C write failed...\n");
+    }
     while (1) {
         //bno.err = BNO_temperature(&bno, &temperature);
+        //
         //if (bno.err != BNO_OK) {
         //    USART_printf(port, "[BNO] error reading temperature\n");
         //}
         //I2C_write(i2c1, BNO_ADDR, BNO_OPR_MODE, (1<<3));
-        //i2c_err = I2C_read(i2c1, BNO_ADDR, BNO_TEMP, &temperature);
-        //if ( i2c_err != I2C_OK) {
-        //    USART_printf(port, "[I2C] error: %s\n", I2C_get_err_str(i2c_err));
-        //}
+        //
+
+
+
+        i2c_err = I2C_read(i2c1, BNO_ADDR, BNO_UNIT_SEL, &addr_data);
+        if ( i2c_err != I2C_OK) {
+            USART_printf(port, "[I2C] error: %s\n", I2C_get_err_str(i2c_err));
+        }
         bno_err = BNO_euler_roll(&bno, &roll);
         if (bno_err != BNO_OK) {
             USART_printf(port, "[BNO] error: %s\n", BNO_err_str(bno_err));
@@ -140,7 +154,7 @@ int main(void) {
             USART_printf(port, "[BNO] error: %s\n", BNO_err_str(bno_err));
         }
 
-        USART_printf(port, "time: %02dh%02dm%02ds -> temperature: %02d*C -> roll:%2d\r", hour, min, cycle++, temperature, roll);
+        USART_printf(port, "time: %02dh%02dm%02ds -> temperature: %02d*C -> roll:%2d -> Read Data: %d\r", hour, min, cycle++, temperature, roll, addr_data);
         if (cycle == 60) {
             min++;
             cycle=0;

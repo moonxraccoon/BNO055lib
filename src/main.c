@@ -141,7 +141,7 @@ int main(void) {
 
 
 
-        i2c_err = I2C_read(i2c1, BNO_ADDR, BNO_UNIT_SEL, &addr_data);
+        i2c_err = I2C_read(i2c1, BNO_ADDR, BNO_OPR_MODE, &addr_data);
         if ( i2c_err != I2C_OK) {
             USART_printf(port, "[I2C] error: %s\n", I2C_get_err_str(i2c_err));
         }
@@ -154,7 +154,7 @@ int main(void) {
             USART_printf(port, "[BNO] error: %s\n", BNO_err_str(bno_err));
         }
 
-        USART_printf(port, "time: %02dh%02dm%02ds -> temperature: %02d*C -> roll:%2d -> Read Data: %d\r", hour, min, cycle++, temperature, roll, addr_data);
+        USART_printf(port, "time: %02dh%02dm%02ds -> temperature: %02d*C -> roll:%2.1f -> Read Data: %d\r", hour, min, cycle++, temperature, (float)roll/16.0, addr_data);
         if (cycle == 60) {
             min++;
             cycle=0;
